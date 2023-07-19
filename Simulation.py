@@ -44,6 +44,7 @@ class ThermalSimulation:
         self.initial_conductivity = np.full(
             (grid_size, grid_size, grid_size), initial_conductivity)
         self.heating_function = heating_function
+        self.T_start = []
         self.T_quarter = []
         self.T_half = []
         self.T_three_quarter = []
@@ -69,72 +70,44 @@ class ThermalSimulation:
         self.num_steps = int(self.total_time / self.dt)
         self.time = np.linspace(0, self.total_time, self.num_steps)
 
-        self.is_hole = np.zeros(
-            (self.grid_size, self.grid_size, self.grid_size), dtype=bool)
-
-    def drill_holes(self, hole_positions, hole_depth, hole_width, face):
+        # Determine the range of cells to be drilled
+    def drill_hole(self, face, start_point, depth, width):
         """
-        Method to represent square holes in the material, considering the face from which the holes are drilled.
-    
+        Function to drill a hole filled with air on any face.
+
         Parameters
         ----------
-        hole_positions (list of floats): The positions of the hole centers along the drilling direction (x, y, z) in meters.
-        hole_depth (float): The depth of the holes in meters.
-        hole_width (float): The width of the holes in meters (considered in the plane orthogonal to drilling direction).
-        face (str): The face from which the drilling starts. Could be '+x', '-x', '+y', '-y', '+z', '-z'.
+        face (str): The face to be drilled on. This can be 'x', 'y', or 'z'.
+        start_point (tuple): The start of the hole. This is a tuple of x, y, z coordinates.
+        depth (float): The depth of the hole in meters.
+        width (float): The width of the hole in meters.
         """
-    
-        # Mapping from face to drill direction
-        face_to_direction = {
-            "+x": (1, 0, 0),
-            "-x": (-1, 0, 0),
-            "+y": (0, 1, 0),
-            "-y": (0, -1, 0),
-            "+z": (0, 0, 1),
-            "-z": (0, 0, -1),
-        }
-    
-        drill_direction = face_to_direction[face]
-    
-        self.is_hole = np.full_like(self.temperature, fill_value=False)
-    
-        for hole_position in hole_positions:
-            hole_center_indices = np.round(
-                np.array(hole_position) / np.array([self.dx, self.dy, self.dz])).astype(int)
-            hole_depth_indices = int(hole_depth / max(self.dx, self.dy, self.dz))
-            hole_width_indices = int(hole_width / max(self.dx, self.dy, self.dz))
-    
-            x_indices = np.arange(self.grid_size)
-            y_indices = np.arange(self.grid_size)
-            z_indices = np.arange(self.grid_size)
-    
-            X, Y, Z = np.meshgrid(x_indices, y_indices, z_indices, indexing='ij')
-    
-            rel_X = X - hole_center_indices[0]
-            rel_Y = Y - hole_center_indices[1]
-            rel_Z = Z - hole_center_indices[2]
-    
-            distance_from_center_along_drill_direction = rel_X * \
-                drill_direction[0] + rel_Y * \
-                drill_direction[1] + rel_Z*drill_direction[2]
-    
-            depth_mask = (0 <= distance_from_center_along_drill_direction) & (
-                distance_from_center_along_drill_direction <= hole_depth_indices)
-    
-            distance_from_drill_line_X = rel_X - \
-                distance_from_center_along_drill_direction*drill_direction[0]
-            distance_from_drill_line_Y = rel_Y - \
-                distance_from_center_along_drill_direction*drill_direction[1]
-            distance_from_drill_line_Z = rel_Z - \
-                distance_from_center_along_drill_direction*drill_direction[2]
-    
-            width_mask = (np.abs(distance_from_drill_line_X) <= hole_width_indices/2) & (np.abs(distance_from_drill_line_Y)
-                                                                                         <= hole_width_indices/2) & (np.abs(distance_from_drill_line_Z) <= hole_width_indices/2)
-    
-            self.is_hole = np.logical_or(self.is_hole, depth_mask & width_mask)
-    
-        self.initial_conductivity[self.is_hole] = 0.026  # thermal conductivity of air in W/m/K
-        self.initial_density[self.is_hole] = 1.2041  # density of air in kg/m^3 at 20 degrees Celsius
+        start_x, start_y, start_z = start_point
+        start_x_idx = int(start_x / self.dx)
+        start_y_idx = int(start_y / self.dy)
+        start_z_idx = int(start_z / self.dz)
+
+        # Determine the range of cells to be drilled
+        if face == 'x':
+            depth_cells = int(depth / self.dx)
+            width_cells = int(width / self.dy)
+            end_cell = start_x_idx + depth_cells
+            self.initial_conductivity[start_x_idx:end_cell, start_y_idx:start_y_idx+width_cells, start_z_idx:start_z_idx+width_cells] = 0.024
+            self.initial_density[start_x_idx:end_cell, start_y_idx:start_y_idx+width_cells, start_z_idx:start_z_idx+width_cells] = 1.224
+        
+        elif face == 'y':
+            depth_cells = int(depth / self.dy)
+            width_cells = int(width / self.dx)
+            end_cell = start_y_idx + depth_cells
+            self.initial_conductivity[start_x_idx:start_x_idx+width_cells, start_y_idx:end_cell, start_z_idx:start_z_idx+width_cells] = 0.024
+            self.initial_density[start_x_idx:start_x_idx+width_cells, start_y_idx:end_cell, start_z_idx:start_z_idx+width_cells] = 1.224
+       
+        elif face == 'z':
+            depth_cells = int(depth / self.dz)
+            width_cells = int(width / self.dx)
+            end_cell = start_z_idx + depth_cells
+            self.initial_conductivity[start_x_idx:start_x_idx+width_cells, start_y_idx:start_y_idx+width_cells, start_z_idx:end_cell] = 0.024
+            self.initial_density[start_x_idx:start_x_idx+width_cells, start_y_idx:start_y_idx+width_cells, start_z_idx:end_cell] = 1.224
 
 
     def simulate(self):
@@ -161,15 +134,11 @@ class ThermalSimulation:
 
             if step % 100 == 0:
                 self.plot_temperature(step)
-                plt.pause(0.05)
-                self.T_quarter.append(self.temperature[int(
-                    0.25*self.grid_size), int(self.grid_size / 2), int(self.grid_size / 2)])
-                self.T_half.append(self.temperature[int(
-                    0.5*self.grid_size), int(self.grid_size / 2), int(self.grid_size / 2)])
-                self.T_three_quarter.append(self.temperature[int(
-                    0.75*self.grid_size), int(self.grid_size / 2), int(self.grid_size / 2)])
-                self.T_end.append(
-                    self.temperature[-1, int(self.grid_size / 2), int(self.grid_size / 2)])
+                self.T_start.append(self.temperature[0, int(self.grid_size / 2), int(self.grid_size / 2)])
+                self.T_quarter.append(self.temperature[int(0.25*self.grid_size), int(self.grid_size / 2)+3, int(self.grid_size / 2)+3])
+                self.T_half.append(self.temperature[int(0.5*self.grid_size), int(self.grid_size / 2)+3, int(self.grid_size / 2)+3])
+                self.T_three_quarter.append(self.temperature[int(0.75*self.grid_size), int(self.grid_size / 2)+3, int(self.grid_size / 2)+3])
+                self.T_end.append(self.temperature[-1, int(self.grid_size / 2)+3, int(self.grid_size / 2)+3])
                 self.plot_times.append(self.time[step])
         
         plt.show()
@@ -251,7 +220,7 @@ class ThermalSimulation:
         plt.suptitle(title, fontsize=12)
         
         plt.subplot(131)
-        plt.imshow(self.temperature[:, :, int(self.grid_size / 2)+1].T, cmap='hot', origin='lower',
+        plt.imshow(self.temperature[:, :, int(self.grid_size / 2)].T, cmap='hot', origin='lower',
                    extent=[0, self.block_length, 0, self.block_width], vmin=25, vmax=80)
         plt.colorbar()
         plt.xlabel('x (m)')
@@ -259,7 +228,7 @@ class ThermalSimulation:
         plt.title('x-y Plane')
 
         plt.subplot(132)
-        plt.imshow(self.temperature[:, int(self.grid_size / 2)-1, :].T, cmap='hot', origin='lower',
+        plt.imshow(self.temperature[:, int(self.grid_size / 2), :].T, cmap='hot', origin='lower',
                    extent=[0, self.block_length, 0, self.block_height], vmin=25, vmax=80)
         plt.colorbar()
         plt.xlabel('x (m)')
@@ -268,53 +237,10 @@ class ThermalSimulation:
         
         plt.subplot(133)
         plt.plot(np.linspace(0, self.block_length, self.grid_size),
-                 self.temperature[:, int(self.grid_size / 2)-1, int(self.grid_size / 2)]+1)
+                 self.temperature[:, int(self.grid_size / 2), int(self.grid_size / 2)])
         plt.xlabel('x (m)')
         plt.ylabel('Temperature (°C)')
         plt.ylim(20, 80)
         
         plt.tight_layout()
         plt.show()
-        
-    def visualize_holes(self):
-        """
-        Function to visualize the holes in the block.
-        """
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
-        x, y, z = np.where(self.is_hole == True)
-        ax.scatter(x, y, z)
-        plt.show()
-
-# %%
-heating = HeatingFunction(peak=75, room_temperature=25, frequency=1/5)
-
-# %%
-# simulation = ThermalSimulation(block_length=0.10, block_width=0.05, block_height=0.05, total_time=500.0,
-#                                grid_size=30, density=2700, specific_heat=897, initial_conductivity=237,
-#                                heating_function=heating.square_wave_temperature)
-
-# hole_positions = [0.025]  
-# hole_width = 0.0001  
-# hole_depth = 0.05  
-# hole_face = '+y'
-# simulation.drill_holes(hole_positions, hole_depth, hole_width, hole_face)
-# simulation.simulate()
-
-# %%
-simulation2 = ThermalSimulation(block_length=0.10, block_width=0.05, block_height=0.05, total_time=1000.0,
-                                grid_size=30, density=2700, specific_heat=897, initial_conductivity=237,
-                                heating_function=heating.square_wave_temperature)
-hole_positions = [0.025, 0.05]  
-hole_width = 0.002 
-hole_depth = 0.05
-hole_face = '+y'
-# simulation2.drill_holes(hole_positions, hole_depth, hole_width, hole_face)
-simulation2.visualize_holes()
-
-simulation2.simulate()
-
-#%%
-simulation.plot_temperature_harmonics()
-simulation2.plot_temperature_harmonics()
-# %%
