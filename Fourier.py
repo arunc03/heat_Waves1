@@ -26,22 +26,22 @@ class FourierAnalysis:
         return area
     
     def fourier_components(self, modes):
-        self.y_FS = np.mean(self.y)
+        self.y_FS = np.mean(self.y_values)
         self.beta = []
         self.phi = []
         for n in range(1, modes+1):
-            y_sin = np.sin((2*np.pi*n*self.x)/self.period)
-            y_cos = np.cos((2*np.pi*n*self.x)/self.period)
+            y_sin = np.sin((2*np.pi*n*self.x_values)/self.period)
+            y_cos = np.cos((2*np.pi*n*self.x_values)/self.period)
         
-            a_n = (2/self.period) * self.trapezium(self.x, self.y*y_cos, self.period) 
-            b_n = (2/self.period) * self.trapezium(self.x, self.y*y_sin, self.period)
+            a_n = (2/self.period) * self.trapezium(self.x_values, self.y_values*y_cos) 
+            b_n = (2/self.period) * self.trapezium(self.x_values, self.y_values*y_sin)
            
             a_i = np.sqrt(a_n**2 + b_n**2)
             self.beta.append(a_i)
-            b_i = -np.arctan2(a_n,b_n)
+            b_i = -np.arctan2(b_n,a_n)
             self.phi.append(b_i)
             
-            self.y_FS += a_i * np.sin((2*np.pi*n*self.x)/self.period - b_i)
+            self.y_FS += a_i * np.sin((2*np.pi*n*self.x_values)/self.period - b_i)
             
         return self.y_FS, self.beta, self.phi
     
@@ -61,9 +61,9 @@ class FourierAnalysis:
         for i in range(1,modes+1, 2):
             self.mode_number.append(i)
             if phi_i[i-1] <= np.pi:
-                phi = phi_i[i-1]+4*np.pi
+                phi = phi_i[i-1] + 2*np.pi
             else:
-                phi = phi_i[i-1]
+                phi = phi_i[i-1] 
                 
             DTFi, DPLi = self.diffusivity(length, beta_i[i-1]/(200/((i)*np.pi)), phi)
             self.diffusivity_transmission.append(DTFi)

@@ -5,6 +5,8 @@ Created on Sun Jul 16 20:18:01 2023
 @author: chonk
 """
 import pickle
+import numpy as np
+import matplotlib.pyplot as plt
 from Simulation import ThermalSimulation
 from Input_Heat_Waves import HeatingFunction
 from Fourier import FourierAnalysis
@@ -46,3 +48,72 @@ with open('block_one_hole.pkl', 'rb') as sim_file_b:
     sim2a = pickle.load(sim_file_b)
 #%%
 sim2a.plot_temperature_harmonics()
+
+#%%
+x = sim1a.plot_times
+y1 = sim1a.T_start
+y2 = sim1a.T_quarter
+y3 = sim1a.T_half
+y4 = sim1a.T_three_quarter
+
+plt.figure(figsize=(12, 4))
+
+plt.subplot(2,2,1)
+plt.plot(x[5813:-1], y1[5813:-1])
+
+plt.subplot(2,2,2)
+plt.plot(x[5813:-1], y2[5813:-1])
+
+plt.subplot(2,2,3)
+plt.plot(x[5813:-1], y3[5813:-1])
+
+plt.subplot(2,2,4)
+plt.plot(x[5813:-1], y4[5813:-1])
+
+plt.tight_layout()
+plt.show()
+
+
+#%%
+fourier1a_quarter = FourierAnalysis(np.array(sim1a.plot_times), np.array(sim1a.T_quarter), 5)
+print(fourier1a_quarter.calculate(0.025, 1))
+
+fourier1a_half = FourierAnalysis(np.array(sim1a.plot_times), np.array(sim1a.T_half), 5)
+print(fourier1a_half.calculate(0.05, 1))
+
+fourier1a_three_quarter = FourierAnalysis(np.array(sim1a.plot_times), np.array(sim1a.T_three_quarter), 5)
+print(fourier1a_three_quarter.calculate(0.075, 1))
+
+#%%
+x = sim2a.plot_times
+y1 = sim2a.T_start
+y2 = sim2a.T_quarter
+y3 = sim2a.T_half
+y4 = sim2a.T_three_quarter
+
+plt.figure(figsize=(12, 4))
+
+plt.subplot(2,2,1)
+plt.plot(x[5813:-1], y1[5813:-1])
+
+plt.subplot(2,2,2)
+plt.plot(x[5813:-1], y2[5813:-1])
+
+plt.subplot(2,2,3)
+plt.plot(x[5813:-1], y3[5813:-1])
+
+plt.subplot(2,2,4)
+plt.plot(x[5813:-1], y4[5813:-1])
+
+plt.tight_layout()
+plt.show()
+
+#%%
+fourier2a_quarter = FourierAnalysis(np.array(sim2a.plot_times), np.array(sim2a.T_quarter), 5)
+print(fourier2a_quarter.calculate(0.025, 1))
+
+fourier2a_half = FourierAnalysis(np.array(sim2a.plot_times), np.array(sim2a.T_half), 5)
+print(fourier2a_half.calculate(0.05, 1))
+
+fourier2a_three_quarter = FourierAnalysis(np.array(sim2a.plot_times), np.array(sim2a.T_three_quarter), 5)
+print(fourier2a_three_quarter.calculate(0.075, 1))

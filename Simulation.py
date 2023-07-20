@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from matplotlib import colors
 from Calculations import HeatEquationSolver
 from Input_Heat_Waves import HeatingFunction
+from Fourier import FourierAnalysis
 
 
 class ThermalSimulation:
