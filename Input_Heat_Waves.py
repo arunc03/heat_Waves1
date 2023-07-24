@@ -6,7 +6,7 @@ Created on Wed Jul 12 10:08:44 2023
 """
 
 import numpy as np
-from scipy.signal import square
+from scipy.signal import square, sawtooth
 
 class HeatingFunction:
     def __init__(self, peak, room_temperature, frequency):
@@ -66,3 +66,21 @@ class HeatingFunction:
             The square wave temperature.
         """
         return (square(2 * np.pi * self.frequency * time) + 1) / 2 * (self.peak - self.room_temperature) + self.room_temperature    
+    
+    def sawtooth_wave_temperature(self, time, frequency=1, amplitude=100, offset=0):
+        """
+        Function to simulate sawtooth wave temperature.
+    
+        Parameters
+        ----------
+        time (float): The current time in seconds.
+        frequency (float): The frequency of the sawtooth wave.
+        peak (float): The peak of the sawtooth wave in Celsius.
+        offset (float): The offset of the sawtooth wave in Celsius.
+    
+        Returns
+        -------
+        float
+            The sawtooth wave temperature.
+        """
+        return (sawtooth(2 * np.pi * self.frequency * time) + 1) / 2 * (self.peak - self.room_temperature) + self.room_temperature
