@@ -141,7 +141,7 @@ class FourierAnalysis:
 
         return D_TF, D_PL
 
-    def calculate(self, length, modes):
+    def calculate(self, length, modes, amplitude):
         """
         Calculate diffusivity values for the given length and number of modes.
 
@@ -165,6 +165,7 @@ class FourierAnalysis:
         self.mode_number = []
         self.diffusivity_transmission = []
         self.diffusivity_phase = []
+        self.amplitude = amplitude
         y_fs, beta_i, phi_i = self.fourier_components(modes)
         for i in range(1, modes + 1, 2):
             self.mode_number.append(i)
@@ -173,7 +174,7 @@ class FourierAnalysis:
             else:
                 phi = phi_i[i - 1]
 
-            DTFi, DPLi = self.diffusivity(length, beta_i[i - 1] / (200 / ((i) * np.pi)), phi)
+            DTFi, DPLi = self.diffusivity(length, beta_i[i - 1] / (2*self.amplitude / ((i) * np.pi)), phi)
             self.diffusivity_transmission.append(DTFi)
             self.diffusivity_phase.append(DPLi)
 
