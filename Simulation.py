@@ -6,11 +6,7 @@ Created on Wed Jul 12 10:09:36 2023
 """
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import colors
 from Calculations import HeatEquationSolver
-from Input_Heat_Waves import HeatingFunction
-from Fourier import FourierAnalysis
-
 
 class ThermalSimulation:
     """
@@ -18,7 +14,8 @@ class ThermalSimulation:
     """
 
     def __init__(self, block_length, block_width, block_height, total_time, grid_size,
-                 density, specific_heat, initial_conductivity, heating_function):
+                 density, specific_heat, initial_conductivity, heating_function,
+                 boundary_conductivity, boundary_specific_heat, boundary_density):
         """
         Initialize the ThermalSimulation class.
 
@@ -44,6 +41,9 @@ class ThermalSimulation:
         self.specific_heat = specific_heat
         self.initial_conductivity = np.full(
             (grid_size, grid_size, grid_size), initial_conductivity)
+        self.boundary_conductivity = boundary_conductivity
+        self.boundary_specific_heat = boundary_specific_heat
+        self.boundary_density = boundary_density
         self.heating_function = heating_function
         self.T_start = []
         self.T_quarter = []
@@ -126,9 +126,9 @@ class ThermalSimulation:
         - Swap the new and old temperature grids.
         - Plot the temperature at certain intervals.
         """
-
         solver = HeatEquationSolver(self.dx, self.dy, self.dz, self.dt, self.num_steps, self.temperature,
-                                    self.heating_function, self.specific_heat, self.initial_conductivity, self.initial_density)
+                                    self.heating_function, self.specific_heat, self.initial_conductivity, 
+                                    self.initial_density)
 
         for step in range(self.num_steps):
             self.temperature = solver.solve(self.time[step])
