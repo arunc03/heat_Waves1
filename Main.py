@@ -219,8 +219,101 @@ simulation1.drill_hole('z', (0.075, 0.015, 0.015), 0.015, 0.003)
 simulation1.simulate()
 
 #%%
-# simulation2 = ThermalSimulation(block_length=0.10, block_width=0.03, block_height=0.03, total_time=500.0,
-#                                 grid_size=35, density=2700, specific_heat=897, initial_conductivity=237,
-#                                 heating_function=heating.sawtooth_wave_temperature)
-# simulation2.drill_hole('x', (0.025, 0.025, 0.025), 0.075, 0.0025)
-# simulation2.simulate()
+simulation2 = ThermalSimulation(block_length=0.10, block_width=0.03, block_height=0.03, total_time=500.0,
+                                grid_size=35, density=2700, specific_heat=897, initial_conductivity=237,
+                                heating_function=heating.sawtooth_wave_temperature, boundary_conductivity=0.024,
+                                boundary_specific_heat=1000, boundary_density=15)
+simulation2.drill_hole('x', (0.025, 0.015, 0.015), 0.075, 0.0025)
+simulation2.simulate()
+
+#%%
+# Sawtooth, 10x3x3 block, three drills drill at top
+simulation1.plot_temperature_harmonics()
+
+x = simulation1.plot_times
+y1 = simulation1.T_start
+y2 = simulation1.T_quarter
+y3 = simulation1.T_half
+y4 = simulation1.T_three_quarter
+
+plt.figure(figsize=(12, 4))
+
+plt.subplot(2,2,1)
+plt.plot(x[3916:-1], y1[3916:-1])
+plt.xlabel('Time (s)')
+plt.ylabel('Temperature (°C)')
+
+plt.subplot(2,2,2)
+plt.plot(x[3916:-1], y2[3916:-1])
+plt.xlabel('Time (s)')
+plt.ylabel('Temperature (°C)')
+
+plt.subplot(2,2,3)
+plt.plot(x[3916:-1], y3[3916:-1])
+plt.xlabel('Time (s)')
+plt.ylabel('Temperature (°C)')
+
+plt.subplot(2,2,4)
+plt.plot(x[3916:-1], y4[3916:-1])
+plt.xlabel('Time (s)')
+plt.ylabel('Temperature (°C)')
+
+plt.tight_layout()
+plt.show()
+
+
+print("Fourier Analysis - 10x3x3 block, three drills drill at top")
+fourier2a_quarter = FourierAnalysis(np.array(simulation1.plot_times[3916:-1]), np.array(simulation1.T_quarter[3916:-1]), 5)
+print(fourier2a_quarter.calculate(0.025, 1, 75))
+
+fourier2a_half = FourierAnalysis(np.array(simulation1.plot_times[3916:-1]), np.array(simulation1.T_half[3916:-1]), 5)
+print(fourier2a_half.calculate(0.05, 1, 75))
+
+fourier2a_three_quarter = FourierAnalysis(np.array(simulation1.plot_times[3916:-1]), np.array(simulation1.T_three_quarter[3916:-1]), 5)
+print(fourier2a_three_quarter.calculate(0.075, 1, 75))
+
+#%%
+# Sawtooth, 10x3x3 block, one drill along centre
+simulation2.plot_temperature_harmonics()
+
+x = simulation2.plot_times
+y1 = simulation2.T_start
+y2 = simulation2.T_quarter
+y3 = simulation2.T_half
+y4 = simulation2.T_three_quarter
+
+plt.figure(figsize=(12, 4))
+
+plt.subplot(2,2,1)
+plt.plot(x[3916:-1], y1[3916:-1])
+plt.xlabel('Time (s)')
+plt.ylabel('Temperature (°C)')
+
+plt.subplot(2,2,2)
+plt.plot(x[3916:-1], y2[3916:-1])
+plt.xlabel('Time (s)')
+plt.ylabel('Temperature (°C)')
+
+plt.subplot(2,2,3)
+plt.plot(x[3916:-1], y3[3916:-1])
+plt.xlabel('Time (s)')
+plt.ylabel('Temperature (°C)')
+
+plt.subplot(2,2,4)
+plt.plot(x[3916:-1], y4[3916:-1])
+plt.xlabel('Time (s)')
+plt.ylabel('Temperature (°C)')
+
+plt.tight_layout()
+plt.show()
+
+
+print("Fourier Analysis - 10x3x3 block, three drills drill at top")
+fourier2a_quarter = FourierAnalysis(np.array(simulation2.plot_times[3916:-1]), np.array(simulation2.T_quarter[3916:-1]), 5)
+print(fourier2a_quarter.calculate(0.025, 1, 75))
+
+fourier2a_half = FourierAnalysis(np.array(simulation2.plot_times[3916:-1]), np.array(simulation2.T_half[3916:-1]), 5)
+print(fourier2a_half.calculate(0.05, 1, 75))
+
+fourier2a_three_quarter = FourierAnalysis(np.array(simulation2.plot_times[3916:-1]), np.array(simulation2.T_three_quarter[3916:-1]), 5)
+print(fourier2a_three_quarter.calculate(0.075, 1, 75))
